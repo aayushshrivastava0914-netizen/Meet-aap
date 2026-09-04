@@ -1,0 +1,13 @@
+{
+  "name": "ayush-meet",
+  "version": "1.0.0",
+  "description": "Ayush Meet video conferencing app",
+  "main": "k.js",
+  "scripts": {
+    "start": "node k.js"
+  },
+  "dependencies": {
+    "express": "^5.1.0",
+    "socket.io": "^4.8.1"
+  }
+}
