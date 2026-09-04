@@ -1,0 +1,1031 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Ayush Meet</title>
+
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+
+body{
+    font-family:Arial,sans-serif;
+    background:#061b25;
+    color:white;
+    min-height:100vh;
+    overflow:hidden;
+}
+
+/* 🌊 RIVER BACKGROUND */
+.ocean{
+    position:fixed;
+    inset:0;
+    z-index:-3;
+    background:
+        radial-gradient(circle at 50% 20%,#1685a8 0,#063c50 38%,#03151e 100%);
+}
+
+.wave{
+    position:absolute;
+    width:200%;
+    height:45%;
+    left:-50%;
+    bottom:-18%;
+    border-radius:50% 50% 0 0;
+    background:rgba(0,180,220,.18);
+    animation:wave 8s ease-in-out infinite;
+}
+
+.wave.two{
+    bottom:-25%;
+    opacity:.5;
+    animation-duration:11s;
+}
+
+@keyframes wave{
+    0%,100%{transform:translateX(-3%) rotate(1deg)}
+    50%{transform:translateX(3%) rotate(-1deg)}
+}
+
+/* 🐬 DOLPHINS */
+.dolphin{
+    position:absolute;
+    font-size:55px;
+    animation:swim 14s linear infinite;
+    filter:drop-shadow(0 8px 10px rgba(0,0,0,.4));
+}
+
+.d1{
+    left:-100px;
+    bottom:32%;
+    animation-delay:0s;
+}
+
+.d2{
+    left:-180px;
+    bottom:48%;
+    font-size:42px;
+    animation-delay:5s;
+}
+
+@keyframes swim{
+    0%{
+        transform:translateX(0) translateY(20px) rotate(-5deg);
+    }
+    45%{
+        transform:translateX(55vw) translateY(-35px) rotate(4deg);
+    }
+    100%{
+        transform:translateX(115vw) translateY(15px) rotate(-3deg);
+    }
+}
+
+/* HEADER */
+header{
+    height:65px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:0 18px;
+    background:rgba(3,10,15,.75);
+    backdrop-filter:blur(12px);
+    border-bottom:1px solid rgba(255,255,255,.12);
+}
+
+.logo{
+    font-size:21px;
+    font-weight:bold;
+}
+
+.logo span{
+    color:#65d9ff;
+}
+
+.room{
+    display:flex;
+    align-items:center;
+    gap:8px;
+}
+
+.roomid{
+    background:rgba(0,0,0,.35);
+    padding:9px 12px;
+    border-radius:9px;
+    font-size:13px;
+}
+
+.copy{
+    border:0;
+    padding:9px 12px;
+    border-radius:9px;
+    background:#65d9ff;
+    cursor:pointer;
+    font-weight:bold;
+}
+
+/* VIDEOS */
+#videos{
+    height:calc(100vh - 145px);
+    padding:16px;
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
+    gap:14px;
+    overflow:auto;
+}
+
+.videoBox{
+    position:relative;
+    min-height:220px;
+    overflow:hidden;
+    border-radius:17px;
+    background:rgba(0,0,0,.45);
+    border:1px solid rgba(255,255,255,.15);
+    box-shadow:0 10px 30px rgba(0,0,0,.3);
+}
+
+.videoBox video{
+    width:100%;
+    height:100%;
+    min-height:220px;
+    object-fit:cover;
+}
+
+.name{
+    position:absolute;
+    left:10px;
+    bottom:10px;
+    background:rgba(0,0,0,.65);
+    padding:7px 10px;
+    border-radius:8px;
+    font-size:13px;
+}
+
+/* CONTROLS */
+.controls{
+    position:fixed;
+    left:0;
+    bottom:0;
+    width:100%;
+    height:80px;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    gap:10px;
+    background:rgba(3,10,15,.82);
+    backdrop-filter:blur(12px);
+    border-top:1px solid rgba(255,255,255,.12);
+}
+
+.btn{
+    width:48px;
+    height:48px;
+    border:0;
+    border-radius:50%;
+    background:#263640;
+    color:white;
+    font-size:19px;
+    cursor:pointer;
+}
+
+.btn:hover{
+    background:#38515e;
+}
+
+.leave{
+    background:#e84545;
+}
+
+/* CHAT */
+.chat{
+    position:fixed;
+    right:15px;
+    top:80px;
+    width:310px;
+    height:420px;
+    display:none;
+    flex-direction:column;
+    background:rgba(7,18,24,.96);
+    backdrop-filter:blur(15px);
+    border:1px solid rgba(255,255,255,.15);
+    border-radius:16px;
+    z-index:20;
+}
+
+.chatHead{
+    padding:15px;
+    border-bottom:1px solid rgba(255,255,255,.1);
+    font-weight:bold;
+}
+
+.messages{
+    flex:1;
+    overflow:auto;
+    padding:12px;
+}
+
+.msg{
+    background:#18313c;
+    padding:9px;
+    margin-bottom:8px;
+    border-radius:9px;
+    word-break:break-word;
+}
+
+.chatInput{
+    display:flex;
+    gap:6px;
+    padding:10px;
+}
+
+.chatInput input{
+    flex:1;
+    padding:10px;
+    border:0;
+    outline:0;
+    border-radius:8px;
+    background:#15242b;
+    color:white;
+}
+
+.chatInput button{
+    border:0;
+    border-radius:8px;
+    padding:0 13px;
+    background:#65d9ff;
+    cursor:pointer;
+}
+
+/* JOIN */
+.join{
+    position:fixed;
+    inset:0;
+    z-index:100;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    background:linear-gradient(#03151de8,#063c50e8);
+}
+
+.card{
+    width:min(410px,90%);
+    padding:30px;
+    border-radius:22px;
+    text-align:center;
+    background:rgba(5,15,21,.88);
+    backdrop-filter:blur(18px);
+    border:1px solid rgba(255,255,255,.15);
+    box-shadow:0 20px 60px rgba(0,0,0,.5);
+}
+
+.card h1{
+    margin-bottom:8px;
+}
+
+.card p{
+    color:#9db2ba;
+    margin-bottom:22px;
+}
+
+.card input{
+    width:100%;
+    padding:14px;
+    margin-bottom:12px;
+    border:1px solid #38515e;
+    border-radius:10px;
+    background:#0b1d25;
+    color:white;
+    outline:none;
+}
+
+.joinBtn{
+    width:100%;
+    padding:14px;
+    border:0;
+    border-radius:10px;
+    background:#65d9ff;
+    color:#03202a;
+    font-weight:bold;
+    font-size:16px;
+    cursor:pointer;
+}
+
+.creator{
+    position:fixed;
+    left:12px;
+    bottom:7px;
+    z-index:50;
+    font-size:11px;
+    color:#8fa2a9;
+}
+
+.creator b{
+    color:#fff;
+}
+
+@media(max-width:600px){
+    header{height:58px}
+    .logo{font-size:18px}
+    .roomid{display:none}
+
+    #videos{
+        height:calc(100vh - 130px);
+        grid-template-columns:1fr;
+        padding:9px;
+    }
+
+    .videoBox,
+    .videoBox video{
+        min-height:200px;
+    }
+
+    .controls{
+        height:72px;
+        gap:7px;
+    }
+
+    .btn{
+        width:43px;
+        height:43px;
+        font-size:17px;
+    }
+
+    .chat{
+        width:calc(100% - 24px);
+        right:12px;
+    }
+}
+</style>
+</head>
+
+<body>
+
+<div class="ocean">
+    <div class="wave"></div>
+    <div class="wave two"></div>
+
+    <div class="dolphin d1">🐬</div>
+    <div class="dolphin d2">🐬</div>
+</div>
+
+<!-- JOIN -->
+<div class="join" id="join">
+
+    <div class="card">
+
+        <h1>🌊 Ayush Meet 🐬</h1>
+
+        <p>
+            Video meetings made simple
+        </p>
+
+        <input
+            id="nameInput"
+            maxlength="30"
+            placeholder="Enter your name">
+
+        <button
+            class="joinBtn"
+            onclick="joinMeeting()">
+            🎥 Join Meeting
+        </button>
+
+    </div>
+
+</div>
+
+<header>
+
+    <div class="logo">
+        🌊 <span>Ayush</span> Meet
+    </div>
+
+    <div class="room">
+
+        <div class="roomid" id="roomId">
+            Room
+        </div>
+
+        <button
+            class="copy"
+            onclick="copyLink()">
+            🔗 Copy Link
+        </button>
+
+    </div>
+
+</header>
+
+<div id="videos"></div>
+
+<!-- CHAT -->
+<div class="chat" id="chat">
+
+    <div class="chatHead">
+        💬 Meeting Chat
+    </div>
+
+    <div class="messages"
+         id="messages"></div>
+
+    <div class="chatInput">
+
+        <input
+            id="chatInput"
+            placeholder="Type message...">
+
+        <button onclick="sendChat()">
+            ➤
+        </button>
+
+    </div>
+
+</div>
+
+<!-- CONTROLS -->
+<div class="controls">
+
+    <button
+        class="btn"
+        id="mic"
+        onclick="toggleMic()">
+        🎤
+    </button>
+
+    <button
+        class="btn"
+        id="camera"
+        onclick="toggleCamera()">
+        📷
+    </button>
+
+    <button
+        class="btn"
+        onclick="shareScreen()">
+        🖥️
+    </button>
+
+    <button
+        class="btn"
+        onclick="toggleChat()">
+        💬
+    </button>
+
+    <button
+        class="btn leave"
+        onclick="leaveCall()">
+        📞
+    </button>
+
+</div>
+
+<div class="creator">
+    ✨ Created by <b>Ayush Shrivastava</b>
+</div>
+
+<script src="/socket.io/socket.io.js"></script>
+
+<script>
+
+const socket = io();
+
+let localStream;
+let peers = {};
+let myName = "";
+
+let roomId =
+    location.pathname.substring(1);
+
+if(!roomId){
+
+    roomId =
+        Math.random()
+        .toString(36)
+        .substring(2,9);
+
+    history.replaceState(
+        null,
+        "",
+        "/" + roomId
+    );
+}
+
+document.getElementById("roomId")
+.textContent =
+"Room: " + roomId;
+
+
+/* JOIN */
+
+async function joinMeeting(){
+
+    myName =
+        document
+        .getElementById("nameInput")
+        .value.trim();
+
+    if(!myName){
+        alert("Enter your name");
+        return;
+    }
+
+    try{
+
+        localStream =
+            await navigator.mediaDevices
+            .getUserMedia({
+                video:true,
+                audio:true
+            });
+
+        document
+        .getElementById("join")
+        .style.display="none";
+
+        addVideo(
+            "local",
+            localStream,
+            true,
+            myName
+        );
+
+        socket.emit(
+            "join-room",
+            roomId
+        );
+
+    }catch(error){
+
+        console.error(error);
+
+        alert(
+            "Camera/Microphone permission required."
+        );
+    }
+}
+
+
+/* VIDEO */
+
+function addVideo(
+    id,
+    stream,
+    muted,
+    name
+){
+
+    if(
+        document.getElementById(
+            "box-"+id
+        )
+    ) return;
+
+    const box =
+        document.createElement("div");
+
+    box.className="videoBox";
+    box.id="box-"+id;
+
+    const video =
+        document.createElement("video");
+
+    video.autoplay=true;
+    video.playsInline=true;
+    video.muted=muted;
+    video.srcObject=stream;
+
+    const label =
+        document.createElement("div");
+
+    label.className="name";
+    label.textContent =
+        name + (muted ? " (You)" : "");
+
+    box.appendChild(video);
+    box.appendChild(label);
+
+    document
+    .getElementById("videos")
+    .appendChild(box);
+}
+
+
+/* PEER */
+
+function createPeer(userId){
+
+    if(peers[userId])
+        return peers[userId];
+
+    const pc =
+        new RTCPeerConnection({
+            iceServers:[
+                {
+                    urls:
+                    "stun:stun.l.google.com:19302"
+                }
+            ]
+        });
+
+    peers[userId]=pc;
+
+    localStream
+    .getTracks()
+    .forEach(track=>{
+        pc.addTrack(
+            track,
+            localStream
+        );
+    });
+
+    pc.onicecandidate =
+        event=>{
+
+            if(event.candidate){
+
+                socket.emit(
+                    "signal",
+                    {
+                        to:userId,
+                        data:{
+                            type:"candidate",
+                            candidate:
+                                event.candidate
+                        }
+                    }
+                );
+            }
+        };
+
+    pc.ontrack =
+        event=>{
+
+            addVideo(
+                userId,
+                event.streams[0],
+                false,
+                "Participant"
+            );
+        };
+
+    return pc;
+}
+
+
+/* EXISTING USERS */
+
+socket.on(
+    "existing-users",
+    users=>{
+
+        users.forEach(
+            async userId=>{
+
+                const pc =
+                    createPeer(userId);
+
+                const offer =
+                    await pc.createOffer();
+
+                await pc.setLocalDescription(
+                    offer
+                );
+
+                socket.emit(
+                    "signal",
+                    {
+                        to:userId,
+                        data:{
+                            type:"offer",
+                            offer
+                        }
+                    }
+                );
+            }
+        );
+    }
+);
+
+
+/* SIGNAL */
+
+socket.on(
+    "signal",
+    async({from,data})=>{
+
+        const pc =
+            createPeer(from);
+
+        if(data.type==="offer"){
+
+            await pc.setRemoteDescription(
+                data.offer
+            );
+
+            const answer =
+                await pc.createAnswer();
+
+            await pc.setLocalDescription(
+                answer
+            );
+
+            socket.emit(
+                "signal",
+                {
+                    to:from,
+                    data:{
+                        type:"answer",
+                        answer
+                    }
+                }
+            );
+        }
+
+        if(data.type==="answer"){
+
+            await pc.setRemoteDescription(
+                data.answer
+            );
+        }
+
+        if(data.type==="candidate"){
+
+            try{
+
+                await pc.addIceCandidate(
+                    data.candidate
+                );
+
+            }catch(e){
+
+                console.log(e);
+            }
+        }
+    }
+);
+
+
+/* USER LEFT */
+
+socket.on(
+    "user-left",
+    userId=>{
+
+        const box =
+            document.getElementById(
+                "box-"+userId
+            );
+
+        if(box)
+            box.remove();
+
+        if(peers[userId]){
+
+            peers[userId].close();
+
+            delete peers[userId];
+        }
+    }
+);
+
+
+/* MIC */
+
+function toggleMic(){
+
+    if(!localStream)
+        return;
+
+    const track =
+        localStream
+        .getAudioTracks()[0];
+
+    if(!track)
+        return;
+
+    track.enabled =
+        !track.enabled;
+
+    document.getElementById("mic")
+    .textContent =
+        track.enabled
+        ? "🎤"
+        : "🔇";
+}
+
+
+/* CAMERA */
+
+function toggleCamera(){
+
+    if(!localStream)
+        return;
+
+    const track =
+        localStream
+        .getVideoTracks()[0];
+
+    if(!track)
+        return;
+
+    track.enabled =
+        !track.enabled;
+
+    document.getElementById("camera")
+    .textContent =
+        track.enabled
+        ? "📷"
+        : "🚫";
+}
+
+
+/* SCREEN SHARE */
+
+async function shareScreen(){
+
+    try{
+
+        const screen =
+            await navigator.mediaDevices
+            .getDisplayMedia({
+                video:true
+            });
+
+        const track =
+            screen.getVideoTracks()[0];
+
+        const localVideo =
+            document.querySelector(
+                "#box-local video"
+            );
+
+        if(localVideo)
+            localVideo.srcObject=screen;
+
+        for(
+            const id in peers
+        ){
+
+            const sender =
+                peers[id]
+                .getSenders()
+                .find(
+                    s =>
+                    s.track &&
+                    s.track.kind==="video"
+                );
+
+            if(sender)
+                await sender.replaceTrack(
+                    track
+                );
+        }
+
+        track.onended=()=>{
+
+            if(localVideo)
+                localVideo.srcObject =
+                    localStream;
+
+            for(
+                const id in peers
+            ){
+
+                const sender =
+                    peers[id]
+                    .getSenders()
+                    .find(
+                        s =>
+                        s.track &&
+                        s.track.kind==="video"
+                    );
+
+                if(sender)
+                    sender.replaceTrack(
+                        localStream
+                        .getVideoTracks()[0]
+                    );
+            }
+        };
+
+    }catch(e){
+
+        console.log(e);
+    }
+}
+
+
+/* CHAT */
+
+function toggleChat(){
+
+    const chat =
+        document.getElementById("chat");
+
+    chat.style.display =
+        chat.style.display==="flex"
+        ? "none"
+        : "flex";
+}
+
+
+function sendChat(){
+
+    const input =
+        document.getElementById(
+            "chatInput"
+        );
+
+    const message =
+        input.value.trim();
+
+    if(!message)
+        return;
+
+    socket.emit(
+        "chat-message",
+        {
+            roomId,
+            name:myName,
+            message
+        }
+    );
+
+    input.value="";
+}
+
+
+document
+.getElementById("chatInput")
+.addEventListener(
+    "keydown",
+    e=>{
+
+        if(e.key==="Enter")
+            sendChat();
+    }
+);
+
+
+socket.on(
+    "chat-message",
+    data=>{
+
+        const div =
+            document.createElement("div");
+
+        div.className="msg";
+
+        div.textContent =
+            data.name +
+            ": " +
+            data.message;
+
+        document
+        .getElementById("messages")
+        .appendChild(div);
+
+        const box =
+            document.getElementById(
+                "messages"
+            );
+
+        box.scrollTop =
+            box.scrollHeight;
+    }
+);
+
+
+/* COPY LINK */
+
+function copyLink(){
+
+    navigator.clipboard
+    .writeText(location.href)
+    .then(()=>{
+        alert(
+            "Meeting link copied!"
+        );
+    });
+}
+
+
+/* LEAVE */
+
+function leaveCall(){
+
+    if(localStream){
+
+        localStream
+        .getTracks()
+        .forEach(
+            track=>track.stop()
+        );
+    }
+
+    location.href="/";
+}
+
+</script>
+
+</body>
+</html>
