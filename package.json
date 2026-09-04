@@ -1,7 +1,6 @@
 {
   "name": "ayush-meet",
   "version": "1.0.0",
-  "description": "Ayush Meet video conferencing app",
   "main": "k.js",
   "scripts": {
     "start": "node k.js"
