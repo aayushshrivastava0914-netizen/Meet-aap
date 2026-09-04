@@ -1,12 +1,13 @@
 {
-  "name": "ayush-meet",
+  "name": "vip-meet",
   "version": "1.0.0",
-  "main": "k.js",
+  "description": "Private WebRTC meeting app",
+  "main": "server.js",
   "scripts": {
-    "start": "node k.js"
+    "start": "node server.js"
   },
   "dependencies": {
-    "express": "^5.1.0",
+    "express": "^4.21.2",
     "socket.io": "^4.8.1"
   }
 }
