@@ -11,221 +11,214 @@ const PORT = process.env.PORT || 3000;
 
 app.use(express.static(path.join(__dirname, "public")));
 
-app.get("/{*splat}", (req, res) => {
-    res.sendFile(path.join(__dirname, "public", "index.html"));
-});
-
-// roomId -> admin socket id
 const rooms = new Map();
 
-// socket -> room
-const socketRooms = new Map();
+function getRoom(roomId) {
+  if (!rooms.has(roomId)) {
+    rooms.set(roomId, {
+      host: null,
+      users: new Map(),
+      pending: new Map()
+    });
+  }
 
-io.on("connection", (socket) => {
+  return rooms.get(roomId);
+}
 
-    // CREATE ROOM
-    socket.on("create-room", ({ roomId, name }) => {
+function roomState(room) {
+  return {
+    users: [...room.users.values()].map(u => ({
+      id: u.id,
+      name: u.name,
+      host: u.id === room.host
+    }))
+  };
+}
 
-        rooms.set(roomId, {
-            admin: socket.id,
-            adminName: name || "Admin",
-            participants: new Map()
-        });
+io.on("connection", socket => {
 
-        socket.join(roomId);
-        socketRooms.set(socket.id, roomId);
+  socket.on("create-room", ({ roomId, name }) => {
+    if (!roomId || !name) return;
 
-        socket.emit("room-created", {
-            roomId,
-            admin: true
-        });
+    const room = getRoom(roomId);
 
-        console.log(`👑 Room ${roomId} created by ${name}`);
+    if (room.host && room.host !== socket.id) {
+      socket.emit("error-message", "This meeting already exists.");
+      return;
+    }
+
+    room.host = socket.id;
+
+    room.users.set(socket.id, {
+      id: socket.id,
+      name
     });
 
+    socket.join(roomId);
 
-    // REQUEST TO JOIN
-    socket.on("request-join", ({ roomId, name }) => {
+    socket.data.roomId = roomId;
+    socket.data.name = name;
+    socket.data.isHost = true;
 
-        const room = rooms.get(roomId);
+    socket.emit("room-created", {
+      roomId,
+      name
+    });
 
-        if (!room) {
-            socket.emit("join-error", "Room does not exist.");
-            return;
+    io.to(roomId).emit("room-users", roomState(room));
+  });
+
+  socket.on("request-join", ({ roomId, name }) => {
+    if (!roomId || !name) return;
+
+    const room = rooms.get(roomId);
+
+    if (!room || !room.host) {
+      socket.emit("join-rejected", "Meeting not found.");
+      return;
+    }
+
+    room.pending.set(socket.id, {
+      id: socket.id,
+      name
+    });
+
+    socket.data.roomId = roomId;
+    socket.data.name = name;
+
+    io.to(room.host).emit("join-request", {
+      id: socket.id,
+      name
+    });
+
+    socket.emit("waiting-approval");
+  });
+
+  socket.on("approve-user", ({ userId }) => {
+    const roomId = socket.data.roomId;
+    const room = rooms.get(roomId);
+
+    if (!room || socket.id !== room.host) return;
+
+    const user = room.pending.get(userId);
+
+    if (!user) return;
+
+    room.pending.delete(userId);
+
+    room.users.set(userId, user);
+
+    const target = io.sockets.sockets.get(userId);
+
+    if (target) {
+      target.join(roomId);
+      target.data.roomId = roomId;
+      target.data.name = user.name;
+      target.data.isHost = false;
+
+      target.emit("approved", {
+        roomId,
+        name: user.name
+      });
+    }
+
+    io.to(roomId).emit("room-users", roomState(room));
+
+    // Tell existing users about the new user.
+    socket.to(roomId).emit("user-joined", {
+      id: userId,
+      name: user.name
+    });
+
+    // Tell the new user about existing users.
+    if (target) {
+      for (const existing of room.users.values()) {
+        if (existing.id === userId) continue;
+
+        target.emit("existing-user", {
+          id: existing.id,
+          name: existing.name
+        });
+      }
+    }
+  });
+
+  socket.on("reject-user", ({ userId }) => {
+    const roomId = socket.data.roomId;
+    const room = rooms.get(roomId);
+
+    if (!room || socket.id !== room.host) return;
+
+    room.pending.delete(userId);
+
+    const target = io.sockets.sockets.get(userId);
+
+    if (target) {
+      target.emit("join-rejected", "Host rejected your request.");
+    }
+  });
+
+  // WebRTC signaling
+  socket.on("offer", ({ to, offer }) => {
+    if (!to || !offer) return;
+
+    io.to(to).emit("offer", {
+      from: socket.id,
+      offer
+    });
+  });
+
+  socket.on("answer", ({ to, answer }) => {
+    if (!to || !answer) return;
+
+    io.to(to).emit("answer", {
+      from: socket.id,
+      answer
+    });
+  });
+
+  socket.on("ice-candidate", ({ to, candidate }) => {
+    if (!to || !candidate) return;
+
+    io.to(to).emit("ice-candidate", {
+      from: socket.id,
+      candidate
+    });
+  });
+
+  socket.on("leave-room", () => {
+    removeUser(socket);
+  });
+
+  socket.on("disconnect", () => {
+    removeUser(socket);
+  });
+
+  function removeUser(sock) {
+    const roomId = sock.data.roomId;
+
+    if (!roomId) return;
+
+    const room = rooms.get(roomId);
+
+    if (!room) return;
+
+    room.pending.delete(sock.id);
+
+    const wasHost = room.host === sock.id;
+
+    room.users.delete(sock.id);
+
+    if (wasHost) {
+      io.to(roomId).emit("meeting-ended");
+
+      for (const user of room.users.values()) {
+        const s = io.sockets.sockets.get(user.id);
+        if (s) {
+          s.leave(roomId);
+          s.data.roomId = null;
         }
+      }
 
-        socket.data.pendingRoom = roomId;
-        socket.data.name = name || "Guest";
-
-        const adminSocket = io.sockets.sockets.get(room.admin);
-
-        if (!adminSocket) {
-            socket.emit("join-error", "Admin is offline.");
-            return;
-        }
-
-        adminSocket.emit("join-request", {
-            socketId: socket.id,
-            name: name || "Guest"
-        });
-
-        socket.emit("waiting-approval");
-
-        console.log(`🕐 Join request: ${name} -> ${roomId}`);
-    });
-
-
-    // ADMIN APPROVES
-    socket.on("approve-user", ({ roomId, socketId }) => {
-
-        const room = rooms.get(roomId);
-
-        if (!room || room.admin !== socket.id) {
-            return;
-        }
-
-        const user = io.sockets.sockets.get(socketId);
-
-        if (!user) return;
-
-        const name = user.data.name || "Guest";
-
-        user.join(roomId);
-        socketRooms.set(socketId, roomId);
-
-        room.participants.set(socketId, {
-            name
-        });
-
-        user.emit("approved", {
-            roomId,
-            name
-        });
-
-        socket.emit("user-approved", {
-            socketId,
-            name
-        });
-
-        // Existing participants get new user's ID
-        socket.to(roomId).emit("user-joined", {
-            socketId,
-            name
-        });
-
-        console.log(`✅ ${name} approved in ${roomId}`);
-    });
-
-
-    // ADMIN REJECTS
-    socket.on("reject-user", ({ roomId, socketId }) => {
-
-        const room = rooms.get(roomId);
-
-        if (!room || room.admin !== socket.id) {
-            return;
-        }
-
-        const user = io.sockets.sockets.get(socketId);
-
-        if (user) {
-            user.emit("rejected");
-        }
-
-        console.log(`❌ User rejected from ${roomId}`);
-    });
-
-
-    // SIGNALING
-    socket.on("signal", ({ to, data }) => {
-
-        const target = io.sockets.sockets.get(to);
-
-        if (!target) return;
-
-        target.emit("signal", {
-            from: socket.id,
-            data
-        });
-    });
-
-
-    // CHAT
-    socket.on("chat-message", ({ roomId, name, message }) => {
-
-        const room = rooms.get(roomId);
-
-        if (!room) return;
-
-        const isMember =
-            room.admin === socket.id ||
-            room.participants.has(socket.id);
-
-        if (!isMember) return;
-
-        io.to(roomId).emit("chat-message", {
-            name,
-            message
-        });
-    });
-
-
-    // ADMIN REMOVE USER
-    socket.on("remove-user", ({ roomId, socketId }) => {
-
-        const room = rooms.get(roomId);
-
-        if (!room || room.admin !== socket.id) {
-            return;
-        }
-
-        const user = io.sockets.sockets.get(socketId);
-
-        if (!user) return;
-
-        user.emit("removed");
-
-        user.leave(roomId);
-
-        room.participants.delete(socketId);
-
-        socket.to(roomId).emit("user-left", socketId);
-
-        console.log(`🚪 User removed from ${roomId}`);
-    });
-
-
-    // DISCONNECT
-    socket.on("disconnect", () => {
-
-        const roomId = socketRooms.get(socket.id);
-
-        if (!roomId) return;
-
-        const room = rooms.get(roomId);
-
-        if (!room) return;
-
-        // Admin left
-        if (room.admin === socket.id) {
-
-            io.to(roomId).emit("room-closed");
-
-            rooms.delete(roomId);
-
-            console.log(`👑 Admin closed room ${roomId}`);
-        } else {
-
-            room.participants.delete(socket.id);
-
-            socket.to(roomId).emit("user-left", socket.id);
-        }
-
-        socketRooms.delete(socket.id);
-    });
-
-});
-
-server.listen(PORT, "0.0.0.0", () => {
-    console.log(`🚀 Ayush Meet running on port ${PORT}`);
-});
+      rooms.delete(roomId);
+     
